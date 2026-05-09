@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Habit Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin: 0;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            background: white;
+        }
+        .greeting {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .intro-text {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+        .features-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .features-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+        .features-list li {
+            padding: 12px 0;
+            font-size: 15px;
+            color: #555;
+            display: flex;
+            align-items: center;
+        }
+        .features-list li::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 35px 0;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: 10px;
+        }
+        .cta-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .login-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .login-info-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .login-info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+        .login-info-note {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .closing {
+            margin-top: 30px;
+            font-size: 15px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .signature {
+            margin-top: 20px;
+            font-size: 15px;
+            color: #333;
+            font-weight: 600;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer-text {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .header {
+                padding: 30px 20px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .greeting {
+                font-size: 18px;
+            }
+            .button {
+                padding: 14px 30px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Welcome to Habit Tracker! 🎉</h1>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">Hi {{userName}},</div>
+            
+            <p class="intro-text">
+                Thank you for joining Habit Tracker! We're excited to help you build better habits and achieve your goals.
+            </p>
+            
+            <p class="features-title">With Habit Tracker, you can:</p>
+            <ul class="features-list">
+                <li>Track your daily habits</li>
+                <li>View detailed analytics</li>
+                <li>Build and maintain streaks</li>
+                <li>Achieve your goals</li>
+            </ul>
+            
+            <!-- CTA Section -->
+            <div class="cta-section">
+                <p class="cta-text">Get started by creating your first habit!</p>
+                <a href="{{dashboardUrl}}" class="button">Login to Get Started</a>
+                
+                <!-- Login Info -->
+                <div class="login-info">
+                    <div class="login-info-label">Your Login Email</div>
+                    <div class="login-info-value">{{userEmail}}</div>
+                    <div class="login-info-note">
+                        Click the button above to login with your email and password.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Closing -->
+            <div class="closing">
+                <p>If you have any questions, feel free to reach out to us.</p>
+                <p style="margin-top: 10px;">Happy habit tracking!</p>
+            </div>
+            
+            <div class="signature">The Habit Tracker Team</div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">© 2024 Habit Tracker. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

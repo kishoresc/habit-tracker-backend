@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Don't Break Your Streak!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin: 0;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            background: white;
+        }
+        .greeting {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .intro-text {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            border-left: 4px solid #ffc107;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 10px;
+        }
+        .warning-box h3 {
+            font-size: 18px;
+            color: #f57c00;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .warning-box p {
+            font-size: 15px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .streak-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+            border-radius: 10px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+        .streak-info h3 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .streak-number {
+            font-size: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+            margin: 15px 0;
+            letter-spacing: -1px;
+        }
+        .streak-message {
+            font-size: 15px;
+            color: #555;
+            margin-top: 15px;
+            line-height: 1.8;
+        }
+        .time-alert {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin: 25px 0;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        .motivation-text {
+            font-size: 16px;
+            color: #555;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            line-height: 1.8;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 35px 0;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: 10px;
+        }
+        .cta-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .closing {
+            margin-top: 30px;
+            font-size: 15px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .signature {
+            margin-top: 20px;
+            font-size: 15px;
+            color: #333;
+            font-weight: 600;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer-text {
+            font-size: 13px;
+            color: #666;
+            margin: 5px 0;
+        }
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .header {
+                padding: 30px 20px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .greeting {
+                font-size: 18px;
+            }
+            .streak-number {
+                font-size: 40px;
+            }
+            .button {
+                padding: 14px 30px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚠️ Don't Break Your Streak!</h1>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">Hi {{userName}},</div>
+            
+            <p class="intro-text">
+                This is an important reminder - the day is almost over and you haven't completed your habit yet!
+            </p>
+            
+            <!-- Warning Box -->
+            <div class="warning-box">
+                <h3>⏰ Time is Running Out!</h3>
+                <p>You haven't completed your habit today, and your streak is at risk of breaking.</p>
+            </div>
+            
+            <!-- Streak Info -->
+            <div class="streak-info">
+                <h3>{{habitName}}</h3>
+                <div class="streak-number">{{currentStreak}} Days 🔥</div>
+                <p class="streak-message">
+                    You've worked hard to build this streak. Don't let it break now!
+                </p>
+            </div>
+            
+            <!-- Time Alert -->
+            <div class="time-alert">
+                ⏰ Only a few hours left until midnight!
+            </div>
+            
+            <!-- Motivation Text -->
+            <div class="motivation-text">
+                <strong>Quick reminder:</strong> Complete your habit before the day ends to keep your streak alive! Every day counts, and you're doing amazing. Just a few more minutes of your time can keep your momentum going!
+            </div>
+            
+            <!-- CTA Section -->
+            <div class="cta-section">
+                <p class="cta-text">Don't wait - complete it now!</p>
+                <a href="{{dashboardUrl}}" class="button">Complete Now ✓</a>
+            </div>
+            
+            <!-- Closing -->
+            <div class="closing">
+                <p>You've got this! 💪</p>
+                <p style="margin-top: 10px;">We believe in you and your ability to stay consistent.</p>
+            </div>
+            
+            <div class="signature">The Habit Tracker Team</div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">© 2024 Habit Tracker. All rights reserved.</p>
+            <p class="footer-text">This is an automated reminder to help you maintain your habits.</p>
+        </div>
+    </div>
+</body>
+</html>

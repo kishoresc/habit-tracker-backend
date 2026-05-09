@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streak Milestone Achieved!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .milestone {
+            background: white;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .milestone h2 {
+            font-size: 48px;
+            color: #f5576c;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Congratulations!</h1>
+    </div>
+    <div class="content">
+        <h2>Hi {{userName}},</h2>
+        <p>You've achieved an amazing milestone!</p>
+        
+        <div class="milestone">
+            <h3>{{habitName}}</h3>
+            <h2>{{streakDays}} Days 🔥</h2>
+            <p>You've maintained your streak for {{streakDays}} consecutive days!</p>
+        </div>
+        
+        <p>This is a huge accomplishment! Your dedication and consistency are truly inspiring.</p>
+        
+        <p>Keep going strong and continue building your success!</p>
+        
+        <center>
+            <a href="{{dashboardUrl}}" class="button">View Your Progress</a>
+        </center>
+        
+        <p>We're proud of you!</p>
+        <p><strong>The Habit Tracker Team</strong></p>
+    </div>
+    <div class="footer">
+        <p>© 2024 Habit Tracker. All rights reserved.</p>
+    </div>
+</body>
+</html>
