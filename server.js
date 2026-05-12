@@ -24,10 +24,15 @@ app.use('/api/habits', require('./routes/habitRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/smtp', require('./routes/smtpRoutes'));
 app.use('/api/email', require('./routes/emailRoutes'));
+app.use('/api/cron', require('./routes/cronRoutes')); // External cron endpoints (keeps Render free tier warm)
 
 // Health check route
 app.get('/', (req, res) => {
-  res.json({ message: 'Habit Tracker API is running' });
+  res.json({ 
+    message: 'Habit Tracker API is running',
+    uptime: `${Math.floor(process.uptime() / 60)} minutes`,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Start cron jobs

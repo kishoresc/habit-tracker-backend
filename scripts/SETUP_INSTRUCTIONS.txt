@@ -1,0 +1,132 @@
+===============================================================================
+  EXTERNAL CRON SETUP FOR RENDER FREE TIER (OPTION A - KEEP SERVER WARM)
+===============================================================================
+
+STEP 1: GENERATE SECRET KEY
+----------------------------
+Run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+Copy the output
+
+
+STEP 2: UPDATE .ENV FILE
+-------------------------
+Replace in .env:
+CRON_SECRET_KEY=paste-your-generated-key-here
+
+
+STEP 3: TEST LOCALLY
+---------------------
+npm install
+npm run dev
+npm run test:cron  (in another terminal)
+
+
+STEP 4: DEPLOY TO RENDER
+-------------------------
+1. Push code to GitHub
+2. Go to render.com
+3. Create new Web Service
+4. Connect your GitHub repo
+5. Add environment variables (copy from .env)
+6. Deploy
+7. Note your URL: https://your-app.onrender.com
+
+
+STEP 5: SETUP CRON-JOB.ORG
+---------------------------
+1. Sign up at https://cron-job.org/
+2. Create Job #1:
+   - Title: Habit Tracker - Keep Alive & Reminders
+   - URL: https://your-app.onrender.com/api/cron/custom-reminders
+   - Schedule: Every 1 minute
+   - Method: POST
+   - Add Header:
+     Name: x-cron-secret
+     Value: your-secret-key-from-env
+   - Timeout: 60 seconds
+
+3. Create Job #2:
+   - Title: Habit Tracker - End of Day Warnings
+   - URL: https://your-app.onrender.com/api/cron/end-of-day-warnings
+   - Schedule: Every 1 day at 21:00 (9:00 PM)
+   - Method: POST
+   - Add Header:
+     Name: x-cron-secret
+     Value: your-secret-key-from-env
+   - Timeout: 60 seconds
+
+4. Test both jobs by clicking "Execute now"
+
+
+STEP 6: VERIFY
+--------------
+- Check cron-job.org execution history (should show 200 OK)
+- Check Render logs (should show API calls every minute)
+- Server should never sleep (uptime keeps increasing)
+- Users should receive reminders at their scheduled times
+
+
+WHY THIS WORKS FOR RENDER FREE TIER:
+-------------------------------------
+✓ Render free tier sleeps after 15 minutes of inactivity
+✓ External cron calls your API every 1 minute
+✓ This keeps your server awake (no cold starts)
+✓ Reminders are sent instantly with no delays
+✓ Server stays warm 24/7 for free!
+
+
+ENDPOINTS:
+----------
+GET  /api/cron/health                  (Public - check server status)
+POST /api/cron/custom-reminders        (Protected - send reminders)
+POST /api/cron/end-of-day-warnings     (Protected - send warnings)
+
+
+TESTING COMMANDS:
+-----------------
+# Health check
+curl https://your-app.onrender.com/api/cron/health
+
+# Custom reminders
+curl -X POST https://your-app.onrender.com/api/cron/custom-reminders \
+  -H "x-cron-secret: your-secret-key"
+
+# End of day warnings
+curl -X POST https://your-app.onrender.com/api/cron/end-of-day-warnings \
+  -H "x-cron-secret: your-secret-key"
+
+
+TROUBLESHOOTING:
+----------------
+Issue: 401 Unauthorized
+Fix: Add x-cron-secret header
+
+Issue: 403 Forbidden
+Fix: Check CRON_SECRET_KEY matches in .env and cron-job.org
+
+Issue: No emails sent
+Fix: Check SMTP settings in .env and habit configuration
+
+Issue: Server still sleeping
+Fix: Verify cron-job.org is calling every 1 minute
+
+
+CONSOLE OUTPUT YOU'LL SEE:
+--------------------------
+Server running on port 5001
+POST /api/cron/custom-reminders 200 234ms  (every minute)
+✅ Reminder sent to user@example.com for habit: Exercise
+POST /api/cron/end-of-day-warnings 200 1234ms  (at 9 PM)
+⚠️ Warning sent to user@example.com for habit: Reading
+
+
+SUCCESS INDICATORS:
+-------------------
+✓ Test script passes all 5 tests
+✓ Cron-job.org shows successful executions
+✓ Render logs show API calls every minute
+✓ Server uptime keeps increasing (never resets to 0)
+✓ Users receive reminder emails on time
+
+
+===============================================================================

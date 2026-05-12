@@ -1,0 +1,199 @@
+const Habit = require('../models/Habit');
+const User = require('../models/User');
+const { sendHabitReminderEmail, sendStreakWarningEmail } = require('../utils/emailService');
+
+// Helper function to check if current time matches reminder time
+const isTimeToSendReminder = (reminderTime) => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  // Parse reminder time (format: "09:00" or "9:00 AM")
+  const timeMatch = reminderTime.match(/(\d{1,2}):(\d{2})/);
+  if (!timeMatch) return false;
+  
+  let reminderHour = parseInt(timeMatch[1]);
+  const reminderMinute = parseInt(timeMatch[2]);
+  
+  // Handle AM/PM format
+  if (reminderTime.toLowerCase().includes('pm') && reminderHour !== 12) {
+    reminderHour += 12;
+  } else if (reminderTime.toLowerCase().includes('am') && reminderHour === 12) {
+    reminderHour = 0;
+  }
+  
+  return currentHour === reminderHour && currentMinute === reminderMinute;
+};
+
+// @desc    Process custom alert time reminders (Also keeps server warm on Render free tier)
+// @route   POST /api/cron/custom-reminders
+// @access  Protected (Cron Secret Key)
+const processCustomReminders = async (req, res) => {
+  try {
+    const startTime = Date.now();
+    
+    // Get all active habits with email reminders enabled
+    const habits = await Habit.find({
+      isActive: true,
+      emailReminderEnabled: true,
+      emailReminderTime: { $ne: null },
+    });
+    
+    let emailsSent = 0;
+    let errors = 0;
+    let habitsChecked = 0;
+    
+    for (const habit of habits) {
+      habitsChecked++;
+      
+      // Check if habit is already completed today
+      if (habit.isCompletedToday()) {
+        continue; // Skip if already completed
+      }
+      
+      // Check if current time matches reminder time
+      if (isTimeToSendReminder(habit.emailReminderTime)) {
+        try {
+          // Get user info
+          const user = await User.findById(habit.userId);
+          
+          if (user && user.notificationEnabled !== false) {
+            await sendHabitReminderEmail(
+              user.email,
+              user.name,
+              habit.name,
+              habit.description || '',
+              habit.currentStreak
+            );
+            emailsSent++;
+            console.log(`✅ Reminder sent to ${user.email} for habit: ${habit.name}`);
+          }
+        } catch (error) {
+          errors++;
+          console.error(`❌ Failed to send reminder for habit ${habit.name}:`, error.message);
+        }
+      }
+    }
+    
+    const processingTime = Date.now() - startTime;
+    
+    res.json({
+      success: true,
+      message: 'Custom reminders processed',
+      emailsSent,
+      errors,
+      habitsChecked,
+      processingTime: `${processingTime}ms`,
+      serverStatus: 'warm',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('❌ Error in custom alert cron:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process custom reminders',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Process end of day warnings (3 hours before midnight)
+// @route   POST /api/cron/end-of-day-warnings
+// @access  Protected (Cron Secret Key)
+const processEndOfDayWarnings = async (req, res) => {
+  try {
+    const startTime = Date.now();
+    console.log('⚠️ Processing end of day warnings...');
+    
+    // Get all active habits
+    const habits = await Habit.find({
+      isActive: true,
+    });
+    
+    let emailsSent = 0;
+    let errors = 0;
+    let habitsChecked = 0;
+    
+    for (const habit of habits) {
+      habitsChecked++;
+      
+      // Check if habit is NOT completed today
+      if (!habit.isCompletedToday()) {
+        try {
+          // Get user info
+          const user = await User.findById(habit.userId);
+          
+          if (user && user.notificationEnabled !== false) {
+            // Send warning email (different from regular reminder)
+            await sendStreakWarningEmail(
+              user.email,
+              user.name,
+              habit.name,
+              habit.currentStreak
+            );
+            emailsSent++;
+            console.log(`⚠️ Warning sent to ${user.email} for habit: ${habit.name}`);
+          }
+        } catch (error) {
+          errors++;
+          console.error(`❌ Failed to send warning for habit ${habit.name}:`, error.message);
+        }
+      }
+    }
+    
+    const processingTime = Date.now() - startTime;
+    console.log(`✅ End of day warnings completed. ${emailsSent} emails sent in ${processingTime}ms`);
+    
+    res.json({
+      success: true,
+      message: 'End of day warnings processed',
+      emailsSent,
+      errors,
+      habitsChecked,
+      processingTime: `${processingTime}ms`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('❌ Error in end of day warning cron:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process end of day warnings',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Health check for cron jobs (Optimized for Render free tier keep-alive)
+// @route   GET /api/cron/health
+// @access  Public
+const cronHealthCheck = async (req, res) => {
+  try {
+    const habitCount = await Habit.countDocuments({ isActive: true });
+    const userCount = await User.countDocuments();
+    const uptime = process.uptime();
+    
+    res.json({
+      success: true,
+      message: 'Cron service is healthy',
+      stats: {
+        activeHabits: habitCount,
+        totalUsers: userCount,
+        serverUptime: `${Math.floor(uptime / 60)} minutes`,
+      },
+      serverStatus: uptime < 900 ? 'recently started' : 'warm',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Health check failed',
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  processCustomReminders,
+  processEndOfDayWarnings,
+  cronHealthCheck,
+};
