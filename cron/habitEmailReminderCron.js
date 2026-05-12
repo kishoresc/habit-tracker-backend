@@ -28,6 +28,7 @@ const isTimeToSendReminder = (reminderTime) => {
 
 // Cron job 1: Custom Alert Time Reminders
 // Runs every minute to check for custom reminder times
+// NOTE: scheduled: false prevents auto-start (we use external cron service instead)
 const customAlertCron = cron.schedule('* * * * *', async () => {
   try {
     console.log('Checking for custom alert time reminders...');
@@ -69,10 +70,13 @@ const customAlertCron = cron.schedule('* * * * *', async () => {
   } catch (error) {
     console.error('Error in custom alert cron:', error.message);
   }
+}, {
+  scheduled: false  // Don't auto-start - we use external cron service
 });
 
 // Cron job 2: End of Day Warning (3 hours before midnight)
 // Runs at 9:00 PM every day (21:00)
+// NOTE: scheduled: false prevents auto-start (we use external cron service instead)
 const endOfDayWarningCron = cron.schedule('0 21 * * *', async () => {
   try {
     console.log('Sending end of day warnings for incomplete habits...');
@@ -112,6 +116,8 @@ const endOfDayWarningCron = cron.schedule('0 21 * * *', async () => {
   } catch (error) {
     console.error('Error in end of day warning cron:', error.message);
   }
+}, {
+  scheduled: false  // Don't auto-start - we use external cron service
 });
 
 // Start both cron jobs

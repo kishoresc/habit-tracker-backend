@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const User = require('../models/User');
 
 // Check for inactive users every hour
+// NOTE: scheduled: false prevents auto-start (we use external cron service instead)
 const checkInactiveUsers = cron.schedule('0 * * * *', async () => {
   try {
     const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000);
@@ -30,6 +31,8 @@ const checkInactiveUsers = cron.schedule('0 * * * *', async () => {
   } catch (error) {
     console.error('Error checking inactive users:', error);
   }
+}, {
+  scheduled: false  // Don't auto-start - we use external cron service
 });
 
 module.exports = { checkInactiveUsers };
