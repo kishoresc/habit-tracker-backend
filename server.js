@@ -35,12 +35,13 @@ app.get('/', (req, res) => {
   });
 });
 
-// Start cron jobs
-checkInactiveUsers.start();
-console.log('Notification cron job started');
+// Internal cron jobs disabled - using external cron service (cron-job.org) instead
+// This keeps the server warm on Render free tier
+// checkInactiveUsers.start();
+// console.log('Notification cron job started');
 
-startHabitEmailReminderCron();
-console.log('Habit email reminder cron job started');
+// startHabitEmailReminderCron();
+// console.log('Habit email reminder cron job started');
 
 // Error handling middleware
 app.use((err, req, res, next) => {
