@@ -21,9 +21,16 @@ const createTransporter = async () => {
           pass: smtpSettings.password,
         },
         // Force IPv4 to avoid IPv6 connection issues
-        dnsOptions: {
-          family: 4
-        }
+        family: 4,
+        // Additional connection options
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 10,
+        rateDelta: 1000,
+        rateLimit: 5,
+        socketTimeout: 60000,
+        greetingTimeout: 30000,
+        connectionTimeout: 60000,
       });
     }
   } catch (error) {
@@ -41,9 +48,10 @@ const createTransporter = async () => {
         pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
       },
       // Force IPv4 to avoid IPv6 connection issues
-      dnsOptions: {
-        family: 4
-      }
+      family: 4,
+      pool: true,
+      maxConnections: 5,
+      socketTimeout: 60000,
     });
   }
   
@@ -57,9 +65,10 @@ const createTransporter = async () => {
       pass: process.env.EMAIL_PASSWORD,
     },
     // Force IPv4 to avoid IPv6 connection issues
-    dnsOptions: {
-      family: 4
-    }
+    family: 4,
+    pool: true,
+    maxConnections: 5,
+    socketTimeout: 60000,
   });
 };
 
