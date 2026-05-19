@@ -111,9 +111,17 @@ const sendEmail = async ({ to, subject, html, text, template, variables }) => {
   // Check if SendGrid API key is available (preferred method for Render)
   const sendgridApiKey = process.env.SENDGRID_API_KEY;
   
+  console.log('🔍 Email Service Check:');
+  console.log(`   - SENDGRID_API_KEY exists: ${sendgridApiKey ? 'YES ✅' : 'NO ❌'}`);
+  console.log(`   - Will use: ${sendgridApiKey ? 'SendGrid (HTTP API)' : 'SMTP (Port 465)'}`);
+  
   if (sendgridApiKey) {
+    console.log('📧 Using SendGrid for email delivery (recommended for Render)');
     return sendEmailViaSendGrid({ to, subject, html, text, template, variables });
   } else {
+    console.log('⚠️ WARNING: SENDGRID_API_KEY not found, falling back to SMTP');
+    console.log('⚠️ SMTP will fail on Render free tier due to port restrictions');
+    console.log('⚠️ Please add SENDGRID_API_KEY to Render environment variables');
     return sendEmailViaSMTP({ to, subject, html, text, template, variables });
   }
 };
