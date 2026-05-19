@@ -1,23 +1,14 @@
 const Habit = require('../models/Habit');
 const User = require('../models/User');
 const { sendHabitReminderEmail, sendStreakWarningEmail } = require('../utils/emailService');
+const moment = require('moment-timezone');
 
 // Helper function to check if current time matches reminder time in user's timezone
 const isTimeToSendReminder = (reminderTime, userTimezone = 'UTC') => {
-  // Get current time in user's timezone
-  const now = new Date();
-  const options = { 
-    timeZone: userTimezone,
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  };
-  
-  const formatter = new Intl.DateTimeFormat('en-US', options);
-  const parts = formatter.formatToParts(now);
-  
-  const currentHour = parseInt(parts.find(p => p.type === 'hour').value);
-  const currentMinute = parseInt(parts.find(p => p.type === 'minute').value);
+  // Get current time in user's timezone using moment-timezone
+  const now = moment().tz(userTimezone);
+  const currentHour = now.hour();
+  const currentMinute = now.minute();
   
   // Parse reminder time (format: "09:00" or "9:00 AM")
   const timeMatch = reminderTime.match(/(\d{1,2}):(\d{2})/);

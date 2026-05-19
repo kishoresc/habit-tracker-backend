@@ -4,6 +4,7 @@
 
 require('dotenv').config();
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
 const User = require('../models/User');
 
 async function updateUserTimezone() {
@@ -69,18 +70,8 @@ async function updateUserTimezone() {
     console.log('');
     
     // Test the timezone
-    const now = new Date();
-    const options = { 
-      timeZone: timezone,
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    };
-    const formatter = new Intl.DateTimeFormat('en-US', options);
-    const localTime = formatter.format(now);
+    const now = moment().tz(timezone);
+    const localTime = now.format('YYYY-MM-DD HH:mm:ss z');
     
     console.log('Current time in user timezone:');
     console.log(`  ${localTime}`);
