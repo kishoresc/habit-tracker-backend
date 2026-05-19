@@ -44,31 +44,7 @@ const createTransporter = async () => {
   // Fallback to environment variables if no database settings
   console.log('Using SMTP settings from environment variables');
   
-  if (process.env.EMAIL_SERVICE === 'gmail') {
-    return nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
-      },
-      // Force IPv4 to avoid IPv6 connection issues
-      dnsOptions: {
-        family: 4
-      },
-      // Increased timeouts for Render environment
-      pool: false,
-      maxConnections: 1,
-      socketTimeout: 60000,
-      connectionTimeout: 60000,
-      greetingTimeout: 60000,
-      tls: {
-        rejectUnauthorized: false,
-        minVersion: 'TLSv1.2'
-      }
-    });
-  }
-  
-  // Default: Use SMTP configuration from env
+  // Always use explicit host instead of 'service: gmail' to ensure IPv4 works
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: process.env.SMTP_PORT || 587,
