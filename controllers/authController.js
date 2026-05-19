@@ -7,9 +7,9 @@ const { sendWelcomeEmail } = require('../utils/emailService');
 // @access  Public
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, timezone } = req.body;
 
-    console.log('Registration attempt:', { name, email });
+    console.log('Registration attempt:', { name, email, timezone });
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -23,6 +23,7 @@ const register = async (req, res) => {
       name,
       email,
       password,
+      timezone: timezone || 'UTC', // Default to UTC if not provided
     });
 
     if (user) {
@@ -36,6 +37,7 @@ const register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        timezone: user.timezone,
         token: generateToken(user._id),
       });
     } else {
@@ -68,6 +70,7 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role,
         notificationEnabled: user.notificationEnabled,
+        timezone: user.timezone,
         token: generateToken(user._id),
       });
     } else {
@@ -92,6 +95,7 @@ const getProfile = async (req, res) => {
       role: user.role,
       lastActive: user.lastActive,
       notificationEnabled: user.notificationEnabled,
+      timezone: user.timezone,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

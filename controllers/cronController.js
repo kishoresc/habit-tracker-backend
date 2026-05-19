@@ -2,11 +2,22 @@ const Habit = require('../models/Habit');
 const User = require('../models/User');
 const { sendHabitReminderEmail, sendStreakWarningEmail } = require('../utils/emailService');
 
-// Helper function to check if current time matches reminder time
-const isTimeToSendReminder = (reminderTime) => {
+// Helper function to check if current time matches reminder time in user's timezone
+const isTimeToSendReminder = (reminderTime, userTimezone = 'UTC') => {
+  // Get current time in user's timezone
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinute = now.getMinutes();
+  const options = { 
+    timeZone: userTimezone,
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false 
+  };
+  
+  const formatter = new Intl.DateTimeFormat('en-US', options);
+  const parts = formatter.formatToParts(now);
+  
+  const currentHour = parseInt(parts.find(p => p.type === 'hour').value);
+  const currentMinute = parseInt(parts.find(p => p.type === 'minute').value);
   
   // Parse reminder time (format: "09:00" or "9:00 AM")
   const timeMatch = reminderTime.match(/(\d{1,2}):(\d{2})/);
@@ -26,7 +37,7 @@ const isTimeToSendReminder = (reminderTime) => {
   }
   
   const matches = currentHour === reminderHour && currentMinute === reminderMinute;
-  console.log(`⏰ [CRON] Time check: Current ${currentHour}:${currentMinute} vs Reminder ${reminderHour}:${reminderMinute} = ${matches}`);
+  console.log(`⏰ [CRON] Time check (${userTimezone}): Current ${currentHour}:${currentMinute} vs Reminder ${reminderHour}:${reminderMinute} = ${matches}`);
   
   return matches;
 };
@@ -55,21 +66,27 @@ const processCustomReminders = async (req, res) => {
     for (const habit of habits) {
       habitsChecked++;
       
-      console.log(`⏰ [CRON] Checking habit: "${habit.name}" (Reminder: ${habit.emailReminderTime})`);
-      
-      // Check if habit is already completed today
-      if (habit.isCompletedToday()) {
-        console.log(`⏰ [CRON] Habit "${habit.name}" already completed today, skipping`);
-        continue; // Skip if already completed
-      }
-      
-      // Check if current time matches reminder time
-      if (isTimeToSendReminder(habit.emailReminderTime)) {
-        try {
-          // Get user info
-          const user = await User.findById(habit.userId);
-          
-          if (user && user.notificationEnabled !== false) {
+      try {
+        // Get user info first to access timezone
+        const user = await User.findById(habit.userId);
+        
+        if (!user) {
+          console.log(`⚠️ [CRON] User not found for habit: "${habit.name}"`);
+          continue;
+        }
+        
+        const userTimezone = user.timezone || 'UTC';
+        console.log(`⏰ [CRON] Checking habit: "${habit.name}" (Reminder: ${habit.emailReminderTime}, Timezone: ${userTimezone})`);
+        
+        // Check if habit is already completed today
+        if (habit.isCompletedToday()) {
+          console.log(`⏰ [CRON] Habit "${habit.name}" already completed today, skipping`);
+          continue; // Skip if already completed
+        }
+        
+        // Check if current time matches reminder time in user's timezone
+        if (isTimeToSendReminder(habit.emailReminderTime, userTimezone)) {
+          if (user.notificationEnabled !== false) {
             await sendHabitReminderEmail(
               user.email,
               user.name,
@@ -80,10 +97,10 @@ const processCustomReminders = async (req, res) => {
             emailsSent++;
             console.log(`✅ Reminder sent to ${user.email} for habit: ${habit.name}`);
           }
-        } catch (error) {
-          errors++;
-          console.error(`❌ Failed to send reminder for habit ${habit.name}:`, error.message);
         }
+      } catch (error) {
+        errors++;
+        console.error(`❌ Failed to send reminder for habit ${habit.name}:`, error.message);
       }
     }
     
