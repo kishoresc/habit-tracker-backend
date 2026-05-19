@@ -95,6 +95,10 @@ const testSmtpConnection = async (req, res) => {
         user: settings.username,
         pass: settings.password,
       },
+      // Force IPv4 to avoid IPv6 connection issues
+      dnsOptions: {
+        family: 4
+      }
     });
 
     // Verify connection

@@ -20,6 +20,10 @@ const createTransporter = async () => {
           user: smtpSettings.username,
           pass: smtpSettings.password,
         },
+        // Force IPv4 to avoid IPv6 connection issues
+        dnsOptions: {
+          family: 4
+        }
       });
     }
   } catch (error) {
@@ -36,6 +40,10 @@ const createTransporter = async () => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
       },
+      // Force IPv4 to avoid IPv6 connection issues
+      dnsOptions: {
+        family: 4
+      }
     });
   }
   
@@ -48,6 +56,10 @@ const createTransporter = async () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
+    // Force IPv4 to avoid IPv6 connection issues
+    dnsOptions: {
+      family: 4
+    }
   });
 };
 
