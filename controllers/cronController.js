@@ -31,6 +31,7 @@ const isTimeToSendReminder = (reminderTime) => {
 const processCustomReminders = async (req, res) => {
   try {
     const startTime = Date.now();
+    console.log('⏰ [CRON] Processing custom reminders...');
     
     // Get all active habits with email reminders enabled
     const habits = await Habit.find({
@@ -38,6 +39,8 @@ const processCustomReminders = async (req, res) => {
       emailReminderEnabled: true,
       emailReminderTime: { $ne: null },
     });
+    
+    console.log(`⏰ [CRON] Found ${habits.length} habits with email reminders enabled`);
     
     let emailsSent = 0;
     let errors = 0;
@@ -76,6 +79,8 @@ const processCustomReminders = async (req, res) => {
     }
     
     const processingTime = Date.now() - startTime;
+    
+    console.log(`⏰ [CRON] Custom reminders completed. Emails sent: ${emailsSent}, Errors: ${errors}, Processing time: ${processingTime}ms`);
     
     res.json({
       success: true,
