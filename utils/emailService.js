@@ -153,6 +153,11 @@ const sendEmailViaSendGrid = async ({ to, subject, html, text, template, variabl
     if (template && variables) {
       emailHtml = await loadTemplate(template, variables);
     }
+    
+    // Ensure we have valid HTML content
+    if (!emailHtml || emailHtml.trim().length === 0) {
+      throw new Error('Email HTML content is empty');
+    }
 
     const msg = {
       to,
@@ -162,7 +167,7 @@ const sendEmailViaSendGrid = async ({ to, subject, html, text, template, variabl
       },
       subject,
       html: emailHtml,
-      text: text || '',
+      text: text || emailHtml.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
     };
 
     const response = await sgMail.send(msg);
@@ -172,7 +177,7 @@ const sendEmailViaSendGrid = async ({ to, subject, html, text, template, variabl
   } catch (error) {
     console.error('❌ SendGrid email failed:', error.message);
     if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
+      console.error('SendGrid error details:', JSON.stringify(error.response.body, null, 2));
     }
     throw error;
   }
@@ -276,8 +281,8 @@ const sendStreakMilestoneEmail = async (userEmail, userName, habitName, streakDa
 const sendHabitReminderEmail = async (userEmail, userName, habitName, habitDescription, currentStreak) => {
   const dashboardUrl = process.env.FRONTEND_URL || 'http://localhost:3000/dashboard';
   
-  // Handle Handlebars conditional for description
-  let template = await loadTemplate('habit-reminder', {
+  // Load template with variables
+  let emailHtml = await loadTemplate('habit-reminder', {
     userName,
     habitName,
     currentStreak,
@@ -286,18 +291,19 @@ const sendHabitReminderEmail = async (userEmail, userName, habitName, habitDescr
   
   // Manually handle the conditional for habitDescription
   if (habitDescription && habitDescription.trim()) {
-    template = template.replace(
+    emailHtml = emailHtml.replace(
       /{{#if habitDescription}}[\s\S]*?{{\/if}}/g,
       `<p style="font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.6;">${habitDescription}</p>`
     );
   } else {
-    template = template.replace(/{{#if habitDescription}}[\s\S]*?{{\/if}}/g, '');
+    emailHtml = emailHtml.replace(/{{#if habitDescription}}[\s\S]*?{{\/if}}/g, '');
   }
   
+  // Pass the processed HTML directly (not template + variables)
   return sendEmail({
     to: userEmail,
     subject: '⏰ Habit Reminder - Don\'t Break Your Streak!',
-    html: template,
+    html: emailHtml, // Already processed HTML
   });
 };
 
