@@ -96,10 +96,15 @@ const testSmtpConnection = async (req, res) => {
         pass: settings.password,
       },
       // Force IPv4 to avoid IPv6 connection issues
-      family: 4,
-      socketTimeout: 60000,
+      dnsOptions: {
+        family: 4
+      },
+      // Additional connection options
+      pool: false,
+      maxConnections: 1,
+      socketTimeout: 30000,
+      connectionTimeout: 30000,
       greetingTimeout: 30000,
-      connectionTimeout: 60000,
     });
 
     // Verify connection
