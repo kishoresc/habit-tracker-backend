@@ -99,12 +99,16 @@ const testSmtpConnection = async (req, res) => {
       dnsOptions: {
         family: 4
       },
-      // Additional connection options
+      // Increased timeouts for Render environment
       pool: false,
       maxConnections: 1,
-      socketTimeout: 30000,
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
+      socketTimeout: 60000,
+      connectionTimeout: 60000,
+      greetingTimeout: 60000,
+      tls: {
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2'
+      }
     });
 
     // Verify connection

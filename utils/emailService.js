@@ -24,12 +24,17 @@ const createTransporter = async () => {
         dnsOptions: {
           family: 4
         },
-        // Additional connection options
+        // Increased timeouts for Render environment
         pool: false, // Disable connection pooling
         maxConnections: 1,
-        socketTimeout: 30000, // 30 seconds
-        connectionTimeout: 30000, // 30 seconds
-        greetingTimeout: 30000, // 30 seconds
+        socketTimeout: 60000, // 60 seconds
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 60000, // 60 seconds
+        // Add TLS options
+        tls: {
+          rejectUnauthorized: false,
+          minVersion: 'TLSv1.2'
+        }
       });
     }
   } catch (error) {
@@ -50,12 +55,16 @@ const createTransporter = async () => {
       dnsOptions: {
         family: 4
       },
-      // Additional connection options
+      // Increased timeouts for Render environment
       pool: false,
       maxConnections: 1,
-      socketTimeout: 30000,
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
+      socketTimeout: 60000,
+      connectionTimeout: 60000,
+      greetingTimeout: 60000,
+      tls: {
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2'
+      }
     });
   }
   
@@ -72,12 +81,16 @@ const createTransporter = async () => {
     dnsOptions: {
       family: 4
     },
-    // Additional connection options
+    // Increased timeouts for Render environment
     pool: false,
     maxConnections: 1,
-    socketTimeout: 30000,
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    connectionTimeout: 60000,
+    greetingTimeout: 60000,
+    tls: {
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2'
+    }
   });
 };
 
@@ -102,45 +115,62 @@ const loadTemplate = async (templateName, variables) => {
 
 // Send email function
 const sendEmail = async ({ to, subject, html, text, template, variables }) => {
-  try {
-    const transporter = await createTransporter();
-    
-    // Get sender email and name from SMTP settings or env
-    let fromEmail = process.env.EMAIL_USER;
-    let fromName = 'Habit Tracker';
-    
+  let retries = 3;
+  let lastError;
+  
+  while (retries > 0) {
     try {
-      const smtpSettings = await SmtpSettings.findOne();
-      if (smtpSettings && smtpSettings.fromEmail) {
-        fromEmail = smtpSettings.fromEmail;
-        fromName = smtpSettings.fromName || 'Habit Tracker';
+      console.log(`📧 Attempting to send email to ${to} (${4 - retries}/3 attempts)`);
+      const transporter = await createTransporter();
+      
+      // Get sender email and name from SMTP settings or env
+      let fromEmail = process.env.EMAIL_USER;
+      let fromName = 'Habit Tracker';
+      
+      try {
+        const smtpSettings = await SmtpSettings.findOne();
+        if (smtpSettings && smtpSettings.fromEmail) {
+          fromEmail = smtpSettings.fromEmail;
+          fromName = smtpSettings.fromName || 'Habit Tracker';
+        }
+      } catch (error) {
+        // Use default from env
+        console.log('Using default email settings from environment');
       }
+
+      // If template is provided, load and process it
+      let emailHtml = html;
+      if (template && variables) {
+        emailHtml = await loadTemplate(template, variables);
+      }
+
+      const mailOptions = {
+        from: `"${fromName}" <${fromEmail}>`,
+        to,
+        subject,
+        html: emailHtml,
+        text: text || '', // Plain text version (optional)
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      console.log('✅ Email sent successfully:', info.messageId);
+      return { success: true, messageId: info.messageId };
+      
     } catch (error) {
-      // Use default from env
-      console.log('Using default email settings from environment');
+      lastError = error;
+      retries--;
+      console.error(`❌ Email send attempt failed (${3 - retries}/3):`, error.message);
+      
+      if (retries > 0) {
+        console.log(`⏳ Retrying in 2 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
-
-    // If template is provided, load and process it
-    let emailHtml = html;
-    if (template && variables) {
-      emailHtml = await loadTemplate(template, variables);
-    }
-
-    const mailOptions = {
-      from: `"${fromName}" <${fromEmail}>`,
-      to,
-      subject,
-      html: emailHtml,
-      text: text || '', // Plain text version (optional)
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('Error sending email:', error.message);
-    throw error;
   }
+  
+  // All retries failed
+  console.error('❌ All email send attempts failed:', lastError.message);
+  throw lastError;
 };
 
 // Send welcome email
