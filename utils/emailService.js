@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const fs = require('fs').promises;
 const path = require('path');
 const SmtpSettings = require('../models/SmtpSettings');
@@ -107,12 +108,76 @@ const loadTemplate = async (templateName, variables) => {
 
 // Send email function
 const sendEmail = async ({ to, subject, html, text, template, variables }) => {
+  // Check if SendGrid API key is available (preferred method for Render)
+  const sendgridApiKey = process.env.SENDGRID_API_KEY;
+  
+  if (sendgridApiKey) {
+    return sendEmailViaSendGrid({ to, subject, html, text, template, variables });
+  } else {
+    return sendEmailViaSMTP({ to, subject, html, text, template, variables });
+  }
+};
+
+// Send email via SendGrid (HTTP API - works on Render free tier)
+const sendEmailViaSendGrid = async ({ to, subject, html, text, template, variables }) => {
+  try {
+    console.log(`📧 Sending email via SendGrid to ${to}`);
+    
+    // Initialize SendGrid
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    // Get sender email and name
+    let fromEmail = process.env.EMAIL_USER || 'habittracker03@gmail.com';
+    let fromName = 'Habit Tracker';
+    
+    try {
+      const smtpSettings = await SmtpSettings.findOne();
+      if (smtpSettings && smtpSettings.fromEmail) {
+        fromEmail = smtpSettings.fromEmail;
+        fromName = smtpSettings.fromName || 'Habit Tracker';
+      }
+    } catch (error) {
+      console.log('Using default email settings from environment');
+    }
+
+    // If template is provided, load and process it
+    let emailHtml = html;
+    if (template && variables) {
+      emailHtml = await loadTemplate(template, variables);
+    }
+
+    const msg = {
+      to,
+      from: {
+        email: fromEmail,
+        name: fromName,
+      },
+      subject,
+      html: emailHtml,
+      text: text || '',
+    };
+
+    const response = await sgMail.send(msg);
+    console.log('✅ Email sent successfully via SendGrid:', response[0].statusCode);
+    return { success: true, messageId: response[0].headers['x-message-id'] };
+    
+  } catch (error) {
+    console.error('❌ SendGrid email failed:', error.message);
+    if (error.response) {
+      console.error('SendGrid error details:', error.response.body);
+    }
+    throw error;
+  }
+};
+
+// Send email via SMTP (fallback method)
+const sendEmailViaSMTP = async ({ to, subject, html, text, template, variables }) => {
   let retries = 3;
   let lastError;
   
   while (retries > 0) {
     try {
-      console.log(`📧 Attempting to send email to ${to} (${4 - retries}/3 attempts)`);
+      console.log(`📧 Attempting to send email via SMTP to ${to} (${4 - retries}/3 attempts)`);
       const transporter = await createTransporter();
       
       // Get sender email and name from SMTP settings or env
@@ -145,7 +210,7 @@ const sendEmail = async ({ to, subject, html, text, template, variables }) => {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully:', info.messageId);
+      console.log('✅ Email sent successfully via SMTP:', info.messageId);
       return { success: true, messageId: info.messageId };
       
     } catch (error) {
