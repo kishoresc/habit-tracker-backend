@@ -12,10 +12,18 @@ const createTransporter = async () => {
     if (smtpSettings && smtpSettings.username && smtpSettings.password) {
       // Use master admin configured SMTP settings
       console.log('Using SMTP settings from database');
+      
+      // Render free tier blocks port 587, use port 465 with SSL instead
+      const usePort465 = smtpSettings.port === 587;
+      const finalPort = usePort465 ? 465 : smtpSettings.port;
+      const finalSecure = usePort465 ? true : smtpSettings.secure;
+      
+      console.log(`📧 SMTP Config: ${smtpSettings.host}:${finalPort} (secure: ${finalSecure})`);
+      
       return nodemailer.createTransport({
         host: smtpSettings.host,
-        port: smtpSettings.port,
-        secure: smtpSettings.secure,
+        port: finalPort,
+        secure: finalSecure,
         auth: {
           user: smtpSettings.username,
           pass: smtpSettings.password,
@@ -44,11 +52,19 @@ const createTransporter = async () => {
   // Fallback to environment variables if no database settings
   console.log('Using SMTP settings from environment variables');
   
+  // Render free tier blocks port 587, use port 465 with SSL instead
+  const envPort = parseInt(process.env.SMTP_PORT) || 587;
+  const usePort465 = envPort === 587;
+  const finalPort = usePort465 ? 465 : envPort;
+  const finalSecure = usePort465 ? true : (process.env.SMTP_SECURE === 'true');
+  
+  console.log(`📧 SMTP Config: ${process.env.SMTP_HOST || 'smtp.gmail.com'}:${finalPort} (secure: ${finalSecure})`);
+  
   // Always use explicit host instead of 'service: gmail' to ensure IPv4 works
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: false, // true for 465, false for other ports
+    port: finalPort,
+    secure: finalSecure,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,

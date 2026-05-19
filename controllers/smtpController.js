@@ -87,10 +87,17 @@ const testSmtpConnection = async (req, res) => {
     }
 
     // Create transporter
+    // Render free tier blocks port 587, use port 465 with SSL instead
+    const usePort465 = settings.port === 587;
+    const finalPort = usePort465 ? 465 : settings.port;
+    const finalSecure = usePort465 ? true : settings.secure;
+    
+    console.log(`📧 Testing SMTP: ${settings.host}:${finalPort} (secure: ${finalSecure})`);
+    
     const transporter = nodemailer.createTransport({
       host: settings.host,
-      port: settings.port,
-      secure: settings.secure,
+      port: finalPort,
+      secure: finalSecure,
       auth: {
         user: settings.username,
         pass: settings.password,
