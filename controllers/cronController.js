@@ -10,7 +10,10 @@ const isTimeToSendReminder = (reminderTime) => {
   
   // Parse reminder time (format: "09:00" or "9:00 AM")
   const timeMatch = reminderTime.match(/(\d{1,2}):(\d{2})/);
-  if (!timeMatch) return false;
+  if (!timeMatch) {
+    console.log(`⚠️ [CRON] Invalid reminder time format: ${reminderTime}`);
+    return false;
+  }
   
   let reminderHour = parseInt(timeMatch[1]);
   const reminderMinute = parseInt(timeMatch[2]);
@@ -22,7 +25,10 @@ const isTimeToSendReminder = (reminderTime) => {
     reminderHour = 0;
   }
   
-  return currentHour === reminderHour && currentMinute === reminderMinute;
+  const matches = currentHour === reminderHour && currentMinute === reminderMinute;
+  console.log(`⏰ [CRON] Time check: Current ${currentHour}:${currentMinute} vs Reminder ${reminderHour}:${reminderMinute} = ${matches}`);
+  
+  return matches;
 };
 
 // @desc    Process custom alert time reminders (Also keeps server warm on Render free tier)
@@ -49,8 +55,11 @@ const processCustomReminders = async (req, res) => {
     for (const habit of habits) {
       habitsChecked++;
       
+      console.log(`⏰ [CRON] Checking habit: "${habit.name}" (Reminder: ${habit.emailReminderTime})`);
+      
       // Check if habit is already completed today
       if (habit.isCompletedToday()) {
+        console.log(`⏰ [CRON] Habit "${habit.name}" already completed today, skipping`);
         continue; // Skip if already completed
       }
       
