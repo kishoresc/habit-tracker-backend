@@ -75,11 +75,11 @@ const customAlertCron = cron.schedule('* * * * *', async () => {
 });
 
 // Cron job 2: End of Day Warning (3 hours before midnight)
-// Runs at 9:00 PM every day (21:00)
+// Runs every hour to check if it's 9:00 PM in each user's timezone
 // NOTE: scheduled: false prevents auto-start (we use external cron service instead)
-const endOfDayWarningCron = cron.schedule('0 21 * * *', async () => {
+const endOfDayWarningCron = cron.schedule('0 * * * *', async () => {
   try {
-    console.log('Sending end of day warnings for incomplete habits...');
+    console.log('⚠️ [CRON] Checking for end of day warnings...');
     
     // Get all active habits
     const habits = await Habit.find({
@@ -87,15 +87,32 @@ const endOfDayWarningCron = cron.schedule('0 21 * * *', async () => {
     });
     
     let emailsSent = 0;
+    let skippedDueToTimezone = 0;
     
     for (const habit of habits) {
-      // Check if habit is NOT completed today
-      if (!habit.isCompletedToday()) {
-        try {
-          // Get user info
-          const user = await User.findById(habit.userId);
-          
-          if (user && user.notificationEnabled !== false) {
+      try {
+        // Get user info first to access timezone
+        const user = await User.findById(habit.userId);
+        
+        if (!user) {
+          continue;
+        }
+        
+        // Check if it's 9 PM (21:00) in the user's timezone
+        const userTimezone = user.timezone || 'UTC';
+        const now = new Date();
+        const userTime = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }));
+        const currentHour = userTime.getHours();
+        
+        // Only send warning if it's 9 PM in user's timezone
+        if (currentHour !== 21) {
+          skippedDueToTimezone++;
+          continue;
+        }
+        
+        // Check if habit is NOT completed today
+        if (!habit.isCompletedToday()) {
+          if (user.notificationEnabled !== false) {
             // Send warning email (different from regular reminder)
             await sendStreakWarningEmail(
               user.email,
@@ -106,13 +123,13 @@ const endOfDayWarningCron = cron.schedule('0 21 * * *', async () => {
             emailsSent++;
             console.log(`⚠️ End of day warning sent to ${user.email} for habit: ${habit.name}`);
           }
-        } catch (error) {
-          console.error(`Failed to send end of day warning for habit ${habit.name}:`, error.message);
         }
+      } catch (error) {
+        console.error(`Failed to send end of day warning for habit ${habit.name}:`, error.message);
       }
     }
     
-    console.log(`✅ End of day warnings completed. ${emailsSent} emails sent.`);
+    console.log(`✅ End of day warnings completed. ${emailsSent} emails sent, ${skippedDueToTimezone} skipped (timezone).`);
   } catch (error) {
     console.error('Error in end of day warning cron:', error.message);
   }
@@ -126,7 +143,7 @@ const startHabitEmailReminderCron = () => {
   console.log('✅ Custom alert time reminder cron started (runs every minute)');
   
   endOfDayWarningCron.start();
-  console.log('✅ End of day warning cron started (runs at 9:00 PM daily)');
+  console.log('✅ End of day warning cron started (runs every hour, checks user timezones)');
 };
 
 // Stop both cron jobs

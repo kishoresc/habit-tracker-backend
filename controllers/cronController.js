@@ -125,7 +125,7 @@ const processCustomReminders = async (req, res) => {
 const processEndOfDayWarnings = async (req, res) => {
   try {
     const startTime = Date.now();
-    console.log('⚠️ Processing end of day warnings...');
+    console.log('⚠️ [CRON] Processing end of day warnings...');
     
     // Get all active habits
     const habits = await Habit.find({
@@ -135,17 +135,37 @@ const processEndOfDayWarnings = async (req, res) => {
     let emailsSent = 0;
     let errors = 0;
     let habitsChecked = 0;
+    let skippedDueToTimezone = 0;
     
     for (const habit of habits) {
       habitsChecked++;
       
-      // Check if habit is NOT completed today
-      if (!habit.isCompletedToday()) {
-        try {
-          // Get user info
-          const user = await User.findById(habit.userId);
-          
-          if (user && user.notificationEnabled !== false) {
+      try {
+        // Get user info first to access timezone
+        const user = await User.findById(habit.userId);
+        
+        if (!user) {
+          console.log(`⚠️ [CRON] User not found for habit: "${habit.name}"`);
+          continue;
+        }
+        
+        // Check if it's 9 PM (21:00) in the user's timezone
+        const userTimezone = user.timezone || 'UTC';
+        const now = moment().tz(userTimezone);
+        const currentHour = now.hour();
+        
+        console.log(`⚠️ [CRON] Checking habit: "${habit.name}" (User: ${user.email}, Timezone: ${userTimezone}, Current Hour: ${currentHour})`);
+        
+        // Only send warning if it's 9 PM in user's timezone
+        if (currentHour !== 21) {
+          skippedDueToTimezone++;
+          console.log(`⏰ [CRON] Skipping - not 9 PM in ${userTimezone} (current hour: ${currentHour})`);
+          continue;
+        }
+        
+        // Check if habit is NOT completed today
+        if (!habit.isCompletedToday()) {
+          if (user.notificationEnabled !== false) {
             // Send warning email (different from regular reminder)
             await sendStreakWarningEmail(
               user.email,
@@ -154,17 +174,19 @@ const processEndOfDayWarnings = async (req, res) => {
               habit.currentStreak
             );
             emailsSent++;
-            console.log(`⚠️ Warning sent to ${user.email} for habit: ${habit.name}`);
+            console.log(`✅ Warning sent to ${user.email} for habit: ${habit.name}`);
           }
-        } catch (error) {
-          errors++;
-          console.error(`❌ Failed to send warning for habit ${habit.name}:`, error.message);
+        } else {
+          console.log(`⏰ [CRON] Habit "${habit.name}" already completed today, skipping`);
         }
+      } catch (error) {
+        errors++;
+        console.error(`❌ Failed to send warning for habit ${habit.name}:`, error.message);
       }
     }
     
     const processingTime = Date.now() - startTime;
-    console.log(`✅ End of day warnings completed. ${emailsSent} emails sent in ${processingTime}ms`);
+    console.log(`✅ End of day warnings completed. Emails sent: ${emailsSent}, Skipped (timezone): ${skippedDueToTimezone}, Errors: ${errors}, Processing time: ${processingTime}ms`);
     
     res.json({
       success: true,
@@ -172,6 +194,7 @@ const processEndOfDayWarnings = async (req, res) => {
       emailsSent,
       errors,
       habitsChecked,
+      skippedDueToTimezone,
       processingTime: `${processingTime}ms`,
       timestamp: new Date().toISOString(),
     });
